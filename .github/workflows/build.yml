@@ -21,21 +21,24 @@ jobs:
         run: |
           pip install buildozer cython==0.29.36
           buildozer init
-          python3 -c '
-          with open("buildozer.spec", "r") as f: spec = f.read()
-          spec = spec.replace("title = My Application", "title = Wardrobe AI")
-          spec = spec.replace("package.name = myapp", "package.name = wardrobeai")
-          spec = spec.replace("package.domain = org.test", "package.domain = org.wardrobeai")
-          spec = spec.replace("requirements = python3,kivy", "requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,setuptools,numpy,opencv,pyjnius,android,certifi")
-          spec = spec.replace("#android.permissions = INTERNET", "android.permissions = CAMERA,INTERNET,ACCESS_NETWORK_STATE")
-          spec = spec.replace("#android.api = 31", "android.api = 33")
-          spec = spec.replace("#android.minapi = 21", "android.minapi = 24")
-          spec = spec.replace("#android.archs = arm64-v8a, armeabi-v7a", "android.archs = arm64-v8a")
-          spec = spec.replace("#android.accept_sdk_license = False", "android.accept_sdk_license = True")
-          spec = spec.replace("source.include_exts = py,png,jpg,kv,atlas", "source.include_exts = py,png,jpg,kv,atlas,json,onnx,xml")
-          spec = spec.replace("log_level = 1", "log_level = 2")
-          with open("buildozer.spec", "w") as f: f.write(spec)
-          '
+          cat << 'EOF' >> buildozer.spec
+
+          [app]
+          title = Wardrobe AI
+          package.name = wardrobeai
+          package.domain = org.wardrobeai
+          source.include_exts = py,png,jpg,kv,atlas,json,onnx,xml
+          requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,setuptools,numpy,opencv,pyjnius,android,certifi
+          android.permissions = CAMERA,INTERNET,ACCESS_NETWORK_STATE
+          android.api = 33
+          android.minapi = 24
+          android.archs = arm64-v8a
+          android.accept_sdk_license = True
+          p4a.branch = release-2024.01.21
+
+          [buildozer]
+          log_level = 2
+          EOF
 
       - name: Build with Buildozer
         uses: ArtemSBulgakov/buildozer-action@v1
