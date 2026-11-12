@@ -17,34 +17,46 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Buildozer and system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev patch lld
+          pip install --upgrade pip
+          pip install buildozer==1.5.0 cython==0.29.36 virtualenv
+
       - name: Configure buildozer.spec
         run: |
-          pip install buildozer cython==0.29.36
           buildozer init
-          cat << 'EOF' >> buildozer.spec
+          python3 -c '
+          import configparser
 
-          [app]
-          title = Wardrobe AI
-          package.name = wardrobeai
-          package.domain = org.wardrobeai
-          source.include_exts = py,png,jpg,kv,atlas,json,onnx,xml
-          requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,setuptools,numpy,opencv,pyjnius,android,certifi
-          android.permissions = CAMERA,INTERNET,ACCESS_NETWORK_STATE
-          android.api = 33
-          android.minapi = 24
-          android.archs = arm64-v8a
-          android.accept_sdk_license = True
-          p4a.branch = release-2024.01.21
+          config = configparser.ConfigParser()
+          config.read("buildozer.spec")
 
-          [buildozer]
-          log_level = 2
-          EOF
+          config["app"]["title"] = "Wardrobe AI"
+          config["app"]["package.name"] = "wardrobeai"
+          config["app"]["package.domain"] = "org.wardrobeai"
+          config["app"]["source.include_exts"] = "py,png,jpg,kv,atlas,json,onnx,xml"
+          config["app"]["requirements"] = "python3,kivy==2.3.0,kivymd==1.2.0,pillow,setuptools,numpy,opencv,pyjnius,android,certifi"
+          config["app"]["android.permissions"] = "CAMERA,INTERNET,ACCESS_NETWORK_STATE"
+          config["app"]["android.api"] = "33"
+          config["app"]["android.minapi"] = "24"
+          config["app"]["android.archs"] = "arm64-v8a"
+          config["app"]["android.accept_sdk_license"] = "True"
+          config["app"]["p4a.branch"] = "release-2024.01.21"
+          config["buildozer"]["log_level"] = "2"
 
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          command: buildozer android debug
-          buildozer_version: stable
+          with open("buildozer.spec", "w") as f:
+              config.write(f)
+          '
+
+      - name: Build APK
+        run: buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
